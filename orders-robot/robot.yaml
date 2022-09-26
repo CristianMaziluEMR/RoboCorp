@@ -5,7 +5,7 @@ tasks:
 condaConfigFile: conda.yaml
 artifactsDir: output
 PATH:
-  - .
+  - ./orders-robot/output
 PYTHONPATH:
   - .
 ignoreFiles:
