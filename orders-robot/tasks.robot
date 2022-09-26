@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation       Template robot main suite.
 
-Library             RPA.Browser.Selenium    auto_close=${false}
+Library             RPA.Browser.Selenium    auto_close=${true}
 Library             RPA.Robocorp.Vault
 Library             RPA.HTTP
 Library             RPA.Excel.Files
@@ -9,6 +9,7 @@ Library             RPA.PDF
 Library             String
 Library             OperatingSystem
 Library             String
+Library             Collections
 
 
 *** Tasks ***
@@ -43,31 +44,25 @@ Bypass annoying pop-up
     Click Button    class:btn-warning
 
 Fill the form using orders.csv data
-    @{orders}    Retreive list of lines from orders.csv
+    ${orders}    Retreive list robot component dictionaries from orders.csv
     FOR    ${order}    IN    @{orders}
-        &{order-dict}    Convert order line to dictionary    ${order}
-        Log To Console    ${order-dict}[address]
+        Fill and submit one order    ${order}
     END
 
-Retreive list of lines from orders.csv
+Retreive list robot component dictionaries from orders.csv
     ${csv}    Get File    orders.csv
     @{read}    Create List    ${csv}
-    @{orders}    Split To Lines    @{read}    1
-    RETURN    @{orders}
 
-Convert order line to dictionary
-    [Arguments]    ${order}
-    ${split-order}    Split String    ${order}    ,
-    Log To Console    ${split-order}[4]
-    &{order-dict}    Create Dictionary
-    ...    order-number=${split-order}[0]
-    ...    head=${split-order}[1]
-    ...    body=${split-order}[2]
-    ...    legs=${split-order}[3]
-    ...    address=${split-order}[4]
-    RETURN    &{order-dict}
+    @{orders}    Split To Lines    @{read}    1
+    @{split-orders}    Create List
+    FOR    ${order}    IN    @{orders}
+        ${split-order}    Split String    ${order}    ,
+        Append To List    ${split-orders}    ${split-order}
+    END
+
+    RETURN    ${split-orders}
 
 Fill and submit one order
     [Arguments]    ${order}
-    Log    Head of robot is number ${order}[Head] + 1
-    Select From List By Index    id:head    ${order}[Head] + 1
+    Log To Console    Head of robot is number ${order}[0]
+    Log To Console    Address of robot is number ${order}[4]
