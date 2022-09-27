@@ -50,16 +50,15 @@ Fill the form using orders.csv data
         Fill order    ${order}
 
         Click Button    preview
-        Screenshot    robot-preview-image    ${OUTPUT_DIR}${/}robot_preview.png
+        ${image-path}    Set Variable    ${OUTPUT_DIR}${/}robot_preview.png
+        Screenshot    robot-preview-image    ${image-path}
         Click Button    order
-        Wait For Element    receipt
         ${receipt-html}    Get Element Attribute    receipt    outerHTML
-        ${pdf-path}    ${OUTPUT_DIR}${/}receipt_for_robot_${order}[0].pdf
+        ${pdf-path}    Set Variable    ${OUTPUT_DIR}${/}receipt_for_robot_${order}[0].pdf
         Html To Pdf    ${receipt-html}    ${pdf-path}
 
-        Open File    ${pdf-path}
-        Add Files To Pdf    ${OUTPUT_DIR}${/}robot_preview.png    ${pdf-path}
-
+        ${list-of-images-for-pdf}    Create List    ${image-path}
+        Add Files To Pdf    ${list-of-images-for-pdf}    ${pdf-path}
         Click Button    order-another
     END
 
