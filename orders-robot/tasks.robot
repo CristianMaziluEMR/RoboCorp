@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation       Template robot main suite.
 
-Library             RPA.Browser.Selenium    auto_close=${true}
+Library             RPA.Browser.Selenium    auto_close=${false}
 Library             RPA.Robocorp.Vault
 Library             RPA.HTTP
 Library             RPA.Excel.Files
@@ -10,6 +10,7 @@ Library             String
 Library             OperatingSystem
 Library             String
 Library             Collections
+Library             RPA.Desktop
 
 
 *** Tasks ***
@@ -44,12 +45,25 @@ Bypass annoying pop-up
     Click Button    class:btn-warning
 
 Fill the form using orders.csv data
-    ${orders}    Retreive list robot component dictionaries from orders.csv
+    ${orders}    Retreive list robot components from orders.csv
     FOR    ${order}    IN    @{orders}
-        Fill and submit one order    ${order}
+        Fill order    ${order}
+
+        Click Button    preview
+        Screenshot    robot-preview-image    ${OUTPUT_DIR}${/}robot_preview.png
+        Click Button    order
+        Wait For Element    receipt
+        ${receipt-html}    Get Element Attribute    receipt    outerHTML
+        ${pdf-path}    ${OUTPUT_DIR}${/}receipt_for_robot_${order}[0].pdf
+        Html To Pdf    ${receipt-html}    ${pdf-path}
+
+        Open File    ${pdf-path}
+        Add Files To Pdf    ${OUTPUT_DIR}${/}robot_preview.png    ${pdf-path}
+
+        Click Button    order-another
     END
 
-Retreive list robot component dictionaries from orders.csv
+Retreive list robot components from orders.csv
     ${csv}    Get File    orders.csv
     @{read}    Create List    ${csv}
 
@@ -62,7 +76,9 @@ Retreive list robot component dictionaries from orders.csv
 
     RETURN    ${split-orders}
 
-Fill and submit one order
+Fill order
     [Arguments]    ${order}
-    Log To Console    Head of robot is number ${order}[0]
-    Log To Console    Address of robot is number ${order}[4]
+    Select From List By Index    id:head    ${order}[1]
+    Select Radio Button    body    ${order}[2]
+    Input Text    class:form-control    ${order}[3]
+    Input Text    id:address    ${order}[4]
