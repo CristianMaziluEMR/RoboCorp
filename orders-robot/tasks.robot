@@ -12,6 +12,8 @@ Library             String
 Library             Collections
 Library             RPA.Desktop
 Library             RPA.Windows
+Library             RPA.Archive
+Library             RPA.Email.Exchange
 
 
 *** Tasks ***
@@ -60,22 +62,54 @@ Bypass annoying pop-up
 
 Fill the form using orders.csv data
     ${orders}    Retreive list robot components from orders.csv
+    @{files}    Create List
     FOR    ${order}    IN    @{orders}
         Bypass annoying pop-up
         Fill order    ${order}
 
         Click Button    preview
         ${image-path}    Set Variable    ${OUTPUT_DIR}${/}robot_preview.png
+        Append To List    ${files}    ${image-path}
+        Wait Until Element Is Visible    //*[@id="robot-preview-image"]/img[1]
+        Wait Until Element Is Visible    //*[@id="robot-preview-image"]/img[2]
+        Wait Until Element Is Visible    //*[@id="robot-preview-image"]/img[3]
         RPA.Browser.Selenium.Screenshot    robot-preview-image    ${image-path}
-        Click Button    order
-        ${receipt-html}    Get Element Attribute    receipt    outerHTML
+
+        FOR    ${attempt-number}    IN RANGE    0    9
+            ${alert-list}    Create List
+            Wait Until Element Is Visible    //*[@id="order"]
+            Click Button    //*[@id="order"]
+            ${alert-list}    Get WebElements    class:alert-danger
+            ${alert-list-len}    Get Length    ${alert-list}
+            IF    "${alert-list-len}" == "0"    BREAK
+        END
+
+        Wait Until Element Is Visible    //*[@id="receipt"]/p[1]
+        ${receipt-html}    Get Element Attribute    //*[@id="receipt"]    outerHTML
         ${pdf-path}    Set Variable    ${OUTPUT_DIR}${/}receipt_for_robot_${order}[0].pdf
         Html To Pdf    ${receipt-html}    ${pdf-path}
 
         ${list-of-images-for-pdf}    Create List    ${image-path}
-        Add Files To Pdf    ${list-of-images-for-pdf}    ${pdf-path}
-        Click Button    order-another
+        Add Files To Pdf    ${list-of-images-for-pdf}    ${pdf-path}    append=true
+        Append To List    ${files}    ${pdf-path}
+
+        IF    "${order}[0]" == "1"
+            Archive Folder With Zip    ${OUTPUT_DIR}    ${OUTPUT_DIR}${/}PDFs.zip    include=*.pdf
+        ELSE
+            Add To Archive    ${pdf-path}    ${OUTPUT_DIR}${/}PDFs.zip
+        END
+        Remove File    ${pdf-path}
+
+        FOR    ${attempt-number}    IN RANGE    0    9
+            ${another-button-list}    Create List
+            Wait Until Element Is Visible    //*[@id="order-another"]
+            Click Button    //*[@id="order-another"]
+            ${another-button-list}    Get WebElements    class:alert alert-danger
+            ${another-button-list-len}    Get Length    ${alert-list}
+            IF    "${another-button-list-len}" == "0"    BREAK
+        END
     END
+    Remove File    ${image-path}
 
 Retreive list robot components from orders.csv
     ${csv}    Get File    orders.csv
