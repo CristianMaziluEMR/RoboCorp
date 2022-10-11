@@ -1,7 +1,3 @@
 *** Settings ***
 Documentation       Template robot main suite.
-
-
-*** Tasks ***
-Minimal task
-    Log    Done.
+...                 Shared settings and code
