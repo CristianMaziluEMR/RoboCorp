@@ -5,6 +5,7 @@ Library             RPA.FTP
 Library             RPA.HTTP
 Library             RPA.JSON
 Library             RPA.Tables
+Library             Collections
 
 
 *** Variables ***
@@ -15,6 +16,9 @@ ${TRAFFIC_JSON_FILE_PATH}=      ${OUTPUT_DIR}${/}traffic.json
 Produce traffic data work items
     Download traffic data
     ${traffic_data}=    Load traffic data as table
+    ${filtered_data}=    Filter and sort traffic data    ${traffic_data}
+    ${filtered_data}=    Get latest data by country    ${filtered_data}
+    Write table to CSV    ${filtered_data}    test.csv
 
 
 *** Keywords ***
@@ -27,5 +31,27 @@ Download traffic data
 Load traffic data as table
     ${json}=    Load JSON from file    ${TRAFFIC_JSON_FILE_PATH}
     ${table}=    Create Table    ${json}[value]
-    Write table to CSV    ${table}    test.csv
     RETURN    ${table}
+
+Filter and sort traffic data
+    [Arguments]    ${table}
+    ${max_rate}=    Set Variable    ${5.0}
+    ${rate_key}=    Set Variable    NumericValue
+    ${gender_key}=    Set Variable    Dim1
+    ${both_genders}=    Set Variable    BTSX
+    ${year_key}=    Set Variable    TimeDim
+    Filter Table By Column    ${table}    ${rate_key}    <    ${max_rate}
+    Filter Table By Column    ${table}    ${gender_key}    ==    ${both_genders}
+    Sort Table By Column    ${table}    ${year_key}    False
+    RETURN    ${table}
+
+Get latest data by country
+    [Arguments]    ${table}
+    ${country_key}=    Set Variable    SpatialDim
+    ${table}=    Group Table By Column    ${table}    ${country_key}
+    ${latest_data_by_country}=    Create List
+    FOR    ${group}    IN    @{table}
+        ${first_row}=    Pop Table Row    ${group}
+        Append To List    ${latest_data_by_country}    ${first_row}
+    END
+    RETURN    ${latest_data_by_country}
