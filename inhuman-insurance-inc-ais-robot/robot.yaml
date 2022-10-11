@@ -18,6 +18,7 @@ environmentConfigs:
 artifactsDir: output  
 
 PATH:
+
   - .
 PYTHONPATH:
   - .
