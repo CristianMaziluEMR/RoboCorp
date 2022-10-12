@@ -3,7 +3,6 @@ Documentation       Inhuman Insurance, Inc. Artificial Intelligence System robot
 ...                 Produces traffic data work items.
 
 Library             Collections
-Library             RPA.HTTP
 Library             RPA.JSON
 Library             RPA.Tables
 Resource            shared.robot
